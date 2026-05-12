@@ -868,7 +868,16 @@
     }
   });
 
-
+// 🔥 SESSIONSTORAGE TEST
+console.log('🧪 Storage Test:');
+try {
+  sessionStorage.setItem('test', '123');
+  console.log('✅ SessionStorage = WORKING');
+  console.log('Test value:', sessionStorage.getItem('test'));
+} catch(e) {
+  console.log('❌ SessionStorage = BLOCKED:', e.message);
+  alert('🚫 SessionStorage BLOCKED! Use SECRET URL method');
+}
 function triggerQuiz() {
   console.log('🔥 Selected:', currentLevel.toUpperCase());
   
