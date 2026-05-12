@@ -830,93 +830,105 @@
       </div>
     </div>
 
-    <script>
-      // LEVEL REDIRECTS - CHANGE THESE URLS!!!
-      const levelUrls = {
-        easy: "page1.html",
-        medium: "https://medium.example.com",
-        hard: "https://hard.example.com",
-        hardcore: "https://hardcore.example.com"
-      };
-      let currentLevel = 'easy';
-      // DROPDOWN FUNCTIONALITY
-      function toggleDropdown() {
-        document.getElementById('dropdownMenu').classList.toggle('active');
-        document.querySelector('.dropdown-trigger').classList.toggle('active');
-      }
-      // BIND DROPDOWN ITEMS
-      document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.dropdown-item').forEach(item => {
-          item.addEventListener('click', function() {
-            currentLevel = this.dataset.level;
-            document.getElementById('selectedLevel').textContent = currentLevel.toUpperCase();
-            document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
-            toggleDropdown();
-          });
-        });
-      });
-      // CLOSE DROPDOWN ON OUTSIDE CLICK
-      document.addEventListener('click', function(e) {
-        const dropdown = document.querySelector('.dropdown-container');
-        if (dropdown && !dropdown.contains(e.target)) {
-          document.getElementById('dropdownMenu').classList.remove('active');
-          document.querySelector('.dropdown-trigger').classList.remove('active');
-        }
-      });
-      // FIXED SINGLE triggerQuiz FUNCTION
-      function triggerQuiz() {
-  console.log('🔥 Level:', currentLevel);
-  
-  // GENERATE TOKEN
-  const token = Math.random().toString(36).substring(2) + Date.now();
-  sessionStorage.setItem('elite_quiz_token', token);
-  
-  // SINGLE QUIZ PAGE - ignores levelUrls
-  const quizUrl = `page1.html?access=${token}`;
-  
-  document.getElementById('redirectLayer').style.display = 'flex';
-  setTimeout(() => {
-    console.log('🚀 TOKEN QUIZ REDIRECT:', quizUrl);
-    window.location.href = quizUrl;
-  }, 1000);
-}
-      // ANTI-CHEAT & STICKY AD
-      window.onload = () => {
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('selectstart', e => e.preventDefault());
-        document.addEventListener('dragstart', e => e.preventDefault());
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 'a')) {
-            e.preventDefault();
-            return false;
-          }
-        }, false);
-        setTimeout(() => {
-          document.getElementById('stickyAd').style.bottom = '0px';
-        }, 3000);
-      };
+<script>
+  // LEVEL REDIRECTS - YOUR 4 PAGES
+  const levelUrls = {
+    easy: "page1.html",
+    medium: "page2.html",
+    hard: "page3.html", 
+    hardcore: "page4.html"
+  };
+  let currentLevel = 'easy';
 
-      function closeSticky() {
-        document.getElementById('stickyAd').style.display = 'none';
-      }
-      // TOUCH PREVENTION
-      document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) event.preventDefault();
-      }, {
-        passive: false
-      });
-      let lastTouchEnd = 0;
-      document.addEventListener('touchend', function(event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) event.preventDefault();
-        lastTouchEnd = now;
-      }, false);
-      document.addEventListener('touchcancel', function(event) {
-        event.preventDefault();
-      }, false);
-    </script>
+  // DROPDOWN FUNCTIONALITY
+  function toggleDropdown() {
+    document.getElementById('dropdownMenu').classList.toggle('active');
+    document.querySelector('.dropdown-trigger').classList.toggle('active');
+  }
 
+  // BIND DROPDOWN ITEMS
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', function() {
+        currentLevel = this.dataset.level;
+        document.getElementById('selectedLevel').textContent = currentLevel.toUpperCase();
+        document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+        this.classList.add('selected');
+        toggleDropdown();
+      });
+    });
+  });
+
+  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  document.addEventListener('click', function(e) {
+    const dropdown = document.querySelector('.dropdown-container');
+    if (dropdown && !dropdown.contains(e.target)) {
+      document.getElementById('dropdownMenu').classList.remove('active');
+      document.querySelector('.dropdown-trigger').classList.remove('active');
+    }
+  });
+
+  // 🔥 MULTI-LEVEL TOKEN SYSTEM
+  function triggerQuiz() {
+    console.log('🔥 Selected:', currentLevel.toUpperCase());
+    
+    // GENERATE TOKEN
+    const token = Math.random().toString(36).substring(2) + Date.now();
+    sessionStorage.setItem('elite_quiz_token', token);
+    
+    // LEVEL-SPECIFIC PAGE
+    const quizPage = levelUrls[currentLevel];
+    const quizUrl = `${quizPage}?access=${token}`;
+    
+    // LOADING SCREEN
+    document.getElementById('redirectLayer').style.display = 'flex';
+    
+    setTimeout(() => {
+      console.log('🚀', currentLevel.toUpperCase(), '→', quizUrl);
+      window.location.href = quizUrl;
+    }, 1500);
+  }
+
+  // ANTI-CHEAT & STICKY AD
+  window.onload = () => {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('dragstart', e => e.preventDefault());
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+          (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 'a')) {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+    setTimeout(() => {
+      document.getElementById('stickyAd').style.bottom = '0px';
+    }, 3000);
+  };
+
+  function closeSticky() {
+    document.getElementById('stickyAd').style.display = 'none';
+  }
+
+  // TOUCH PREVENTION
+  document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) event.preventDefault();
+  }, { passive: false });
+  
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) event.preventDefault();
+    lastTouchEnd = now;
+  }, false);
+  
+  document.addEventListener('touchcancel', function(event) {
+    event.preventDefault();
+  }, false);
+</script>
+
+
+    
   </body>
 
 </html>
