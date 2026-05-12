@@ -255,178 +255,199 @@
     </div>
   </div>
 
-  <script>
-    // TOKEN SYSTEM
-    function verifyToken() {
-      const urlToken = new URLSearchParams(window.location.search).get('access');
-      const sessionToken = sessionStorage.getItem('elite_quiz_token');
-      
-      if (!urlToken || urlToken !== sessionToken) {
-        document.getElementById('accessDenied').style.display = 'flex';
-        return false;
-      }
-      
-      // SUCCESS - Clear token (single use)
-      sessionStorage.removeItem('elite_quiz_token');
-      return true;
+<script>
+  // 🔥 FIXED TOKEN SYSTEM
+  function verifyToken() {
+    const urlToken = new URLSearchParams(window.location.search).get('access');
+    const sessionToken = sessionStorage.getItem('elite_quiz_token');
+    const expiry = parseInt(sessionStorage.getItem('elite_quiz_token_expiry') || 0);
+    
+    if (Date.now() > expiry) {
+      sessionStorage.clear();
+      showAccessDenied();
+      return false;
     }
-
-    // QUESTIONS POOL - EDIT HERE
-    const questionPool = [
-      {question:"Which gun has highest close-range damage?", options:["M1887","UMP","MP40","AK47"], correct:0},
-      {question:"Best character for healing?", options:["Alok","K","Hayato","Chrono"], correct:0},
-      {question:"Which has highest headshot damage?", options:["AWM","M82B","Kar98k","AUG"], correct:0},
-      {question:"Fastest running character?", options:["Kelly","Hayato","Wukong","Alok"], correct:0},
-      {question:"Best shotgun for close range?", options:["M1887","SPAS12","M1014","MAG-7"], correct:0},
-      {question:"Which gives most shield?", options:["Medkit","Shield potion","Deep healing","Bandage"], correct:1},
-      {question:"Highest fire rate SMG?", options:["Vector","MP40","UMP","PPSh"], correct:0},
-      {question:"Best for gloo wall spam?", options:["Clu","Wukong","Alok","K"], correct:0},
-      {question:"Which map has trains?", options:["Bermuda","Kalahari","Purgatory","Alpine"], correct:0},
-      {question:"Most expensive gun skin?", options:["Scar x Dragon","M4A1 Polar","AK x Thunder","UMP x Graffiti"], correct:0},
-      {question:"Character with silence skill?", options:["Xayne","Clu","Shani","Luqueta"], correct:0},
-      {question:"Best AR for long range?", options:["AUG","SCAR","M4A1","AK"], correct:0}
-    ];
-
-    // QUIZ STATE
-    let currentQuestion = 0, score = 0, timeLeft = 60, timerInterval, shuffledQuestions = [];
-
-    // INIT
-    if (!verifyToken()) return;
-
-    // PRELOADER
-    const preloaderStages = [
-      "VERIFYING PLAYER ACCESS...",
-      "PREPARING QUIZ SESSION...", 
-      "LOADING QUESTIONS..."
-    ];
-    let stage = 0;
-    const stageInterval = setInterval(() => {
-      document.getElementById('preloaderText').textContent = preloaderStages[stage];
-      stage++;
-      if (stage >= preloaderStages.length) {
-        clearInterval(stageInterval);
-        setTimeout(startQuiz, 800);
-      }
-    }, 600);
-
-    function startQuiz() {
-      // Hide preloader
-      document.getElementById('preloader').classList.add('hidden');
-      setTimeout(() => {
-        document.getElementById('quizContainer').classList.add('show');
-        initQuiz();
-      }, 500);
+    
+    if (!urlToken || !sessionToken || urlToken !== sessionToken) {
+      showAccessDenied();
+      return false;
     }
+    
+    sessionStorage.setItem('elite_quiz_verified', 'true');
+    return true;
+  }
 
-    function initQuiz() {
-      // Shuffle & select 10 questions
-      shuffledQuestions = [...questionPool].sort(() => Math.random() - 0.5).slice(0, 10);
-      showQuestion();
-      startTimer();
+  function checkVerificationStatus() {
+    const isVerified = sessionStorage.getItem('elite_quiz_verified') === 'true';
+    const urlToken = new URLSearchParams(window.location.search).get('access');
+    return isVerified && urlToken ? true : verifyToken();
+  }
+
+  function showAccessDenied() {
+    document.getElementById('accessDenied').style.display = 'flex';
+    document.getElementById('preloader').style.display = 'none';
+  }
+
+  function cleanupTokens() {
+    sessionStorage.removeItem('elite_quiz_token');
+    sessionStorage.removeItem('elite_quiz_token_expiry');
+    sessionStorage.removeItem('elite_quiz_verified');
+  }
+
+  // QUESTIONS POOL
+  const questionPool = [
+    {question:"Which gun has highest close-range damage?", options:["M1887","UMP","MP40","AK47"], correct:0},
+    {question:"Best character for healing?", options:["Alok","K","Hayato","Chrono"], correct:0},
+    {question:"Which has highest headshot damage?", options:["AWM","M82B","Kar98k","AUG"], correct:0},
+    {question:"Fastest running character?", options:["Kelly","Hayato","Wukong","Alok"], correct:0},
+    {question:"Best shotgun for close range?", options:["M1887","SPAS12","M1014","MAG-7"], correct:0},
+    {question:"Which gives most shield?", options:["Medkit","Shield potion","Deep healing","Bandage"], correct:1},
+    {question:"Highest fire rate SMG?", options:["Vector","MP40","UMP","PPSh"], correct:0},
+    {question:"Best for gloo wall spam?", options:["Clu","Wukong","Alok","K"], correct:0},
+    {question:"Which map has trains?", options:["Bermuda","Kalahari","Purgatory","Alpine"], correct:0},
+    {question:"Most expensive gun skin?", options:["Scar x Dragon","M4A1 Polar","AK x Thunder","UMP x Graffiti"], correct:0},
+    {question:"Character with silence skill?", options:["Xayne","Clu","Shani","Luqueta"], correct:0},
+    {question:"Best AR for long range?", options:["AUG","SCAR","M4A1","AK"], correct:0}
+  ];
+
+  let currentQuestion = 0, score = 0, timeLeft = 60, timerInterval, shuffledQuestions = [];
+
+  // START QUIZ
+  if (!checkVerificationStatus()) return;
+
+  // PRELOADER
+  const preloaderStages = ["VERIFYING ACCESS...", "LOADING QUESTIONS...", "STARTING QUIZ..."];
+  let stage = 0;
+  const stageInterval = setInterval(() => {
+    document.getElementById('preloaderText').textContent = preloaderStages[stage];
+    stage++;
+    if (stage >= preloaderStages.length) {
+      clearInterval(stageInterval);
+      setTimeout(startQuiz, 500);
     }
+  }, 800);
 
-    function showQuestion() {
-      const q = shuffledQuestions[currentQuestion];
-      document.getElementById('progress').textContent = `QUESTION ${currentQuestion + 1} / 10`;
-      document.getElementById('questionText').textContent = q.question;
-      
-      const answersGrid = document.getElementById('answersGrid');
-      answersGrid.innerHTML = '';
-      
-      q.options.forEach((option, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.textContent = option;
-        btn.onclick = () => selectAnswer(i, q.correct);
-        answersGrid.appendChild(btn);
-      });
-      
-      document.getElementById('nextBtn').textContent = currentQuestion === 9 ? 'FINISH CHALLENGE' : 'NEXT QUESTION';
-      document.getElementById('nextBtn').disabled = true;
-    }
-
-    function selectAnswer(selected, correct) {
-      const buttons = document.querySelectorAll('.answer-btn');
-      buttons.forEach((btn, i) => {
-        if (i === correct) btn.classList.add('correct');
-        else if (i === selected && i !== correct) btn.classList.add('wrong');
-        btn.disabled = true;
-      });
-      
-      if (selected === correct) score++;
-      document.getElementById('nextBtn').disabled = false;
-    }
-
-    function nextQuestion() {
-      currentQuestion++;
-      if (currentQuestion < 10) {
-        showQuestion();
-      } else {
-        endQuiz();
-      }
-    }
-
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        const timerEl = document.getElementById('timer');
-        timerEl.textContent = timeLeft;
-        
-        if (timeLeft > 30) timerEl.className = 'timer cream';
-        else if (timeLeft > 10) timerEl.className = 'timer bronze';
-        else timerEl.className = 'timer red';
-        
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          showTimeout();
-        }
-      }, 1000);
-    }
-
-    function endQuiz() {
-      clearInterval(timerInterval);
-      const percentage = Math.round((score / 10) * 100);
-      
-      document.getElementById('finalScore').textContent = `${score}/10`;
-      
-      if (percentage >= 80) {
-        document.getElementById('resultTitle').textContent = 'ELITE VETERAN';
-        document.getElementById('resultMessage').textContent = '🏆 Top 5% Player!';
-      } else if (percentage >= 60) {
-        document.getElementById('resultTitle').textContent = 'SKILLED FIGHTER';
-        document.getElementById('resultMessage').textContent = '💪 Above Average!';
-      } else {
-        document.getElementById('resultTitle').textContent = 'ROOKIE SURVIVOR';
-        document.getElementById('resultMessage').textContent = '🔥 Keep Training!';
-      }
-      
-      document.getElementById('resultPopup').classList.add('show');
-    }
-
-    // EVENT LISTENERS
-    document.getElementById('nextBtn').onclick = nextQuestion;
-
-    function restartQuiz() {
-      currentQuestion = 0; score = 0; timeLeft = 60;
-      document.getElementById('resultPopup').classList.remove('show');
-      document.getElementById('timeoutPopup').classList.remove('show');
+  function startQuiz() {
+    document.getElementById('preloader').classList.add('hidden');
+    setTimeout(() => {
+      document.getElementById('quizContainer').classList.add('show');
       initQuiz();
-    }
+    }, 300);
+  }
 
-    function showTimeout() {
-      document.getElementById('timeoutPopup').classList.add('show');
-    }
+  function initQuiz() {
+    shuffledQuestions = [...questionPool].sort(() => Math.random() - 0.5).slice(0, 10);
+    showQuestion();
+    startTimer();
+  }
 
-    function goBack() {
-      window.location.href = 'index.html'; // CHANGE TO YOUR PAGE 1 URL
-    }
-
-    // ANTI-CHEAT
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-          (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 'a')) e.preventDefault();
+  function showQuestion() {
+    const q = shuffledQuestions[currentQuestion];
+    document.getElementById('progress').textContent = `QUESTION ${currentQuestion + 1} / 10`;
+    document.getElementById('questionText').textContent = q.question;
+    
+    const answersGrid = document.getElementById('answersGrid');
+    answersGrid.innerHTML = '';
+    
+    q.options.forEach((option, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = option;
+      btn.onclick = () => selectAnswer(i, q.correct);
+      answersGrid.appendChild(btn);
     });
-  </script>
+    
+    document.getElementById('nextBtn').textContent = currentQuestion === 9 ? 'FINISH CHALLENGE' : 'NEXT QUESTION';
+    document.getElementById('nextBtn').disabled = true;
+  }
+
+  function selectAnswer(selected, correct) {
+    const buttons = document.querySelectorAll('.answer-btn');
+    buttons.forEach((btn, i) => {
+      if (i === correct) btn.classList.add('correct');
+      else if (i === selected && i !== correct) btn.classList.add('wrong');
+      btn.style.pointerEvents = 'none';
+    });
+    
+    if (selected === correct) score++;
+    document.getElementById('nextBtn').disabled = false;
+  }
+
+  function nextQuestion() {
+    currentQuestion++;
+    if (currentQuestion < 10) {
+      showQuestion();
+    } else {
+      endQuiz();
+    }
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      const timerEl = document.getElementById('timer');
+      timerEl.textContent = timeLeft;
+      
+      if (timeLeft > 30) timerEl.className = 'timer cream';
+      else if (timeLeft > 10) timerEl.className = 'timer bronze';
+      else timerEl.className = 'timer red';
+      
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        showTimeout();
+      }
+    }, 1000);
+  }
+
+  function endQuiz() {
+    clearInterval(timerInterval);
+    cleanupTokens(); // CLEANUP HERE
+    
+    const percentage = Math.round((score / 10) * 100);
+    document.getElementById('finalScore').textContent = `${score}/10`;
+    
+    if (percentage >= 80) {
+      document.getElementById('resultTitle').textContent = 'ELITE VETERAN';
+      document.getElementById('resultMessage').textContent = '🏆 Top 5% Player!';
+    } else if (percentage >= 60) {
+      document.getElementById('resultTitle').textContent = 'SKILLED FIGHTER';
+      document.getElementById('resultMessage').textContent = '💪 Above Average!';
+    } else {
+      document.getElementById('resultTitle').textContent = 'ROOKIE SURVIVOR';
+      document.getElementById('resultMessage').textContent = '🔥 Keep Training!';
+    }
+    
+    document.getElementById('resultPopup').classList.add('show');
+  }
+
+  document.getElementById('nextBtn').onclick = nextQuestion;
+
+  function restartQuiz() {
+    currentQuestion = 0; score = 0; timeLeft = 60;
+    document.getElementById('resultPopup').classList.remove('show');
+    document.getElementById('timeoutPopup').classList.remove('show');
+    cleanupTokens();
+    initQuiz();
+  }
+
+  function showTimeout() {
+    document.getElementById('timeoutPopup').classList.add('show');
+  }
+
+  function goBack() {
+    cleanupTokens();
+    window.location.href = 'index.html';
+  }
+
+  // ANTI-CHEAT
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 'a')) e.preventDefault();
+  });
+</script>
+
+
+  
 </body>
 </html>
