@@ -868,26 +868,28 @@
     }
   });
 
-  // 🔥 MULTI-LEVEL TOKEN SYSTEM
-  function triggerQuiz() {
-    console.log('🔥 Selected:', currentLevel.toUpperCase());
-    
-    // GENERATE TOKEN
-    const token = Math.random().toString(36).substring(2) + Date.now();
-    sessionStorage.setItem('elite_quiz_token', token);
-    
-    // LEVEL-SPECIFIC PAGE
-    const quizPage = levelUrls[currentLevel];
-    const quizUrl = `${quizPage}?access=${token}`;
-    
-    // LOADING SCREEN
-    document.getElementById('redirectLayer').style.display = 'flex';
-    
-    setTimeout(() => {
-      console.log('🚀', currentLevel.toUpperCase(), '→', quizUrl);
-      window.location.href = quizUrl;
-    }, 1500);
-  }
+
+function triggerQuiz() {
+  console.log('🔥 Selected:', currentLevel.toUpperCase());
+  
+  const token = Math.random().toString(36).substring(2) + 
+                Date.now() + 
+                Math.random().toString(36).substring(2);
+  
+  const expiry = Date.now() + 5 * 60 * 1000;
+  sessionStorage.setItem('elite_quiz_token', token);
+  sessionStorage.setItem('elite_quiz_token_expiry', expiry);
+  
+  const quizPage = levelUrls[currentLevel];
+  const quizUrl = `${quizPage}?access=${token}&level=${currentLevel}`;
+  
+  document.getElementById('redirectLayer').style.display = 'flex';
+  
+  setTimeout(() => {
+    window.location.href = quizUrl;
+  }, 2000);
+}
+  
 
   // ANTI-CHEAT & STICKY AD
   window.onload = () => {
