@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elite Battle Royale Quiz</title>
+  <style>
+    /* YOUR EXACT CSS VARIABLES + FULL QUIZ STYLES */
+    :root {
+      --primary-dark: #222831;
+      --secondary-dark: #393E46;
+      --accent-bronze: #948979;
+      --accent-cream: #DFD0B8;
+      --pure-white: #fff;
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --icon-glow: rgba(223, 208, 184, 0.6);
+      --icon-glow-strong: rgba(223, 208, 184, 0.8);
+    }
+
+    /* ANTI-CHEAT - DISABLE ALL */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    }
+
+    /* CUSTOM FONT */
+    @font-face {
+      font-family: 'GFF Latin CdMedium';
+      src: url('https://cdn.jsdelivr.net/gh/ALPHA-JIDU/GFF-font/GFF-Latin-CdMedium.woff2') format('woff2');
+      font-display: swap;
+    }
+
+    body {
+      font-family: 'GFF Latin CdMedium', sans-serif;
+      background: var(--primary-dark);
+      color: var(--pure-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* MAIN CONTAINER - CENTERED */
+    .main-container {
+      max-width: 450px; margin: 0 auto; min-height: 100vh; padding: 1rem;
+      display: flex; flex-direction: column;
+    }
+
+    /* TOKEN DENIED POPUP */
+    .access-denied {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(34, 40, 49, 0.98); backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .denied-box {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 2rem; padding: 3rem 2rem; text-align: center; max-width: 350px;
+      box-shadow: 0 0 50px rgba(148, 137, 121, 0.3);
+    }
+    .denied-title { 
+      font-size: 2rem; color: #ff6b6b; font-weight: 900; 
+      text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;
+    }
+
+    /* PRELOADER */
+    .preloader {
+      position: fixed; inset: 0; z-index: 999;
+      background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 1; transition: opacity 0.5s ease;
+    }
+    .preloader.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 60px; height: 60px; border: 4px solid var(--accent-bronze);
+      border-top: 4px solid var(--accent-cream); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: 2rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .preloader-text {
+      font-size: 1.2rem; color: var(--accent-cream); 
+      text-transform: uppercase; letter-spacing: 0.2em;
+    }
+
+    /* QUIZ CONTAINER */
+    .quiz-container { display: none; padding: 2rem 1rem; }
+    .quiz-container.show { display: block; }
+
+    /* HEADER */
+    .quiz-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;
+      padding: 1.5rem; background: var(--glass-bg); border-radius: 1.5rem; border: 1px solid var(--glass-border);
+    }
+    .progress { font-size: 1.1rem; color: var(--accent-cream); font-weight: 900; }
+    .timer {
+      font-size: 1.5rem; font-weight: 900; min-width: 80px; text-align: center;
+      padding: 0.5rem 1rem; border-radius: 1rem; transition: all 0.3s ease;
+    }
+    .timer.cream { background: var(--accent-cream); color: var(--primary-dark); }
+    .timer.bronze { background: var(--accent-bronze); color: var(--pure-white); }
+    .timer.red { background: #ff6b6b; color: var(--pure-white); animation: pulse 1s infinite; }
+
+    /* QUESTION */
+    .question-box {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 1.5rem; padding: 2rem; margin-bottom: 2rem; text-align: center;
+    }
+    .question-text {
+      font-size: 1.3rem; font-weight: 900; color: var(--accent-cream);
+      line-height: 1.4; margin-bottom: 2rem; letter-spacing: 0.05em;
+    }
+
+    /* ANSWERS */
+    .answers-grid {
+      display: grid; gap: 1rem; margin-bottom: 2rem;
+    }
+    .answer-btn {
+      padding: 1.5rem 1rem; background: var(--secondary-dark);
+      border: 2px solid transparent; border-radius: 1rem;
+      color: var(--accent-cream); font-size: 1.1rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      touch-action: manipulation;
+    }
+    .answer-btn:hover { 
+      background: var(--glass-bg); border-color: var(--accent-bronze);
+      transform: translateY(-2px); box-shadow: 0 10px 25px rgba(148, 137, 121, 0.3);
+    }
+    .answer-btn.selected { 
+      background: linear-gradient(135deg, var(--accent-cream), var(--pure-white));
+      color: var(--primary-dark); border-color: var(--accent-bronze);
+    }
+    .answer-btn.correct { background: #4ade80; color: var(--primary-dark); }
+    .answer-btn.wrong { background: #f87171; color: var(--pure-white); }
+
+    /* BANNER AD */
+    .banner-ad {
+      margin: 2rem 0; text-align: center;
+      background: var(--secondary-dark); border-radius: 1rem; padding: 0.5rem;
+      border: 1px solid rgba(148, 137, 121, 0.3);
+    }
+
+    /* NEXT BUTTON */
+    .next-btn {
+      width: 100%; padding: 1.5rem; background: var(--accent-cream);
+      border: 2px solid var(--accent-bronze); border-radius: 2rem;
+      color: var(--primary-dark); font-size: 1.3rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.15em;
+      cursor: pointer; transition: all 0.3s ease;
+    }
+    .next-btn:hover { 
+      background: var(--pure-white); transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(148, 137, 121, 0.4);
+    }
+    .next-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* POPUPS */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(34, 40, 49, 0.95); backdrop-filter: blur(20px);
+      display: none; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .overlay.show { display: flex; }
+    .popup {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 2rem; padding: 3rem 2rem; text-align: center; max-width: 400px;
+      box-shadow: 0 0 60px rgba(148, 137, 121, 0.4);
+    }
+    .popup h2 {
+      font-size: 2rem; font-weight: 900; margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--accent-bronze), var(--accent-cream));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .score { font-size: 3.5rem; font-weight: 900; color: var(--accent-cream); margin: 1rem 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 480px) {
+      .main-container { padding: 0.5rem; }
+      .question-text { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ACCESS DENIED -->
+  <div id="accessDenied" class="access-denied">
+    <div class="denied-box">
+      <h1 class="denied-title">ACCESS DENIED</h1>
+      <p style="color: var(--accent-cream); font-size: 1.1rem; margin-bottom: 2rem;">
+        Unauthorized Quiz Access
+      </p>
+      <button onclick="goBack()" class="next-btn" style="font-size: 1.1rem;">
+        GO BACK
+      </button>
+    </div>
+  </div>
+
+  <!-- PRELOADER -->
+  <div id="preloader" class="preloader">
+    <div class="spinner"></div>
+    <div class="preloader-text" id="preloaderText">VERIFYING PLAYER ACCESS...</div>
+  </div>
+
+  <!-- MAIN QUIZ -->
+  <div class="main-container">
+    <div id="quizContainer" class="quiz-container">
+      <div class="quiz-header">
+        <div class="progress" id="progress">QUESTION 1 / 10</div>
+        <div class="timer cream" id="timer">60</div>
+      </div>
+
+      <div class="question-box">
+        <div class="question-text" id="questionText"></div>
+      </div>
+
+      <div class="answers-grid" id="answersGrid"></div>
+
+      <div class="banner-ad">
+        <div style="max-width: 320px; margin: 0 auto; transform: scale(0.9);">
+          <script>
+            atOptions = {
+              'key': 'cf98935e71b827c45c756e4614c046fe',
+              'format': 'iframe',
+              'height': 50,
+              'width': 320,
+              'params': {}
+            };
+          </script>
+          <script src="https://www.highperformanceformat.com/cf98935e71b827c45c756e4614c046fe/invoke.js"></script>
+        </div>
+      </div>
+
+      <button id="nextBtn" class="next-btn" disabled>NEXT QUESTION</button>
+    </div>
+  </div>
+
+  <!-- TIME OUT POPUP -->
+  <div id="timeoutPopup" class="overlay">
+    <div class="popup">
+      <h2>TIME OUT</h2>
+      <p style="color: var(--accent-bronze); margin-bottom: 2rem;">
+        You failed to finish the challenge in time.
+      </p>
+      <button onclick="restartQuiz()" class="next-btn" style="margin-right: 1rem;">RESTART</button>
+      <button onclick="goBack()" class="next-btn" style="background: var(--secondary-dark);">EXIT</button>
+    </div>
+  </div>
+
+  <!-- RESULT POPUP -->
+  <div id="resultPopup" class="overlay">
+    <div class="popup">
+      <h2 id="resultTitle">ELITE VETERAN</h2>
+      <div class="score" id="finalScore">10/10</div>
+      <div id="resultMessage" style="color: var(--accent-cream); font-size: 1.2rem; margin: 1.5rem 0;"></div>
+      <button onclick="restartQuiz()" class="next-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script>
+    // TOKEN SYSTEM
+    function verifyToken() {
+      const urlToken = new URLSearchParams(window.location.search).get('access');
+      const sessionToken = sessionStorage.getItem('elite_quiz_token');
+      
+      if (!urlToken || urlToken !== sessionToken) {
+        document.getElementById('accessDenied').style.display = 'flex';
+        return false;
+      }
+      
+      // SUCCESS - Clear token (single use)
+      sessionStorage.removeItem('elite_quiz_token');
+      return true;
+    }
+
+    // QUESTIONS POOL - EDIT HERE
+    const questionPool = [
+      {question:"Which gun has highest close-range damage?", options:["M1887","UMP","MP40","AK47"], correct:0},
+      {question:"Best character for healing?", options:["Alok","K","Hayato","Chrono"], correct:0},
+      {question:"Which has highest headshot damage?", options:["AWM","M82B","Kar98k","AUG"], correct:0},
+      {question:"Fastest running character?", options:["Kelly","Hayato","Wukong","Alok"], correct:0},
+      {question:"Best shotgun for close range?", options:["M1887","SPAS12","M1014","MAG-7"], correct:0},
+      {question:"Which gives most shield?", options:["Medkit","Shield potion","Deep healing","Bandage"], correct:1},
+      {question:"Highest fire rate SMG?", options:["Vector","MP40","UMP","PPSh"], correct:0},
+      {question:"Best for gloo wall spam?", options:["Clu","Wukong","Alok","K"], correct:0},
+      {question:"Which map has trains?", options:["Bermuda","Kalahari","Purgatory","Alpine"], correct:0},
+      {question:"Most expensive gun skin?", options:["Scar x Dragon","M4A1 Polar","AK x Thunder","UMP x Graffiti"], correct:0},
+      {question:"Character with silence skill?", options:["Xayne","Clu","Shani","Luqueta"], correct:0},
+      {question:"Best AR for long range?", options:["AUG","SCAR","M4A1","AK"], correct:0}
+    ];
+
+    // QUIZ STATE
+    let currentQuestion = 0, score = 0, timeLeft = 60, timerInterval, shuffledQuestions = [];
+
+    // INIT
+    if (!verifyToken()) return;
+
+    // PRELOADER
+    const preloaderStages = [
+      "VERIFYING PLAYER ACCESS...",
+      "PREPARING QUIZ SESSION...", 
+      "LOADING QUESTIONS..."
+    ];
+    let stage = 0;
+    const stageInterval = setInterval(() => {
+      document.getElementById('preloaderText').textContent = preloaderStages[stage];
+      stage++;
+      if (stage >= preloaderStages.length) {
+        clearInterval(stageInterval);
+        setTimeout(startQuiz, 800);
+      }
+    }, 600);
+
+    function startQuiz() {
+      // Hide preloader
+      document.getElementById('preloader').classList.add('hidden');
+      setTimeout(() => {
+        document.getElementById('quizContainer').classList.add('show');
+        initQuiz();
+      }, 500);
+    }
+
+    function initQuiz() {
+      // Shuffle & select 10 questions
+      shuffledQuestions = [...questionPool].sort(() => Math.random() - 0.5).slice(0, 10);
+      showQuestion();
+      startTimer();
+    }
+
+    function showQuestion() {
+      const q = shuffledQuestions[currentQuestion];
+      document.getElementById('progress').textContent = `QUESTION ${currentQuestion + 1} / 10`;
+      document.getElementById('questionText').textContent = q.question;
+      
+      const answersGrid = document.getElementById('answersGrid');
+      answersGrid.innerHTML = '';
+      
+      q.options.forEach((option, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = option;
+        btn.onclick = () => selectAnswer(i, q.correct);
+        answersGrid.appendChild(btn);
+      });
+      
+      document.getElementById('nextBtn').textContent = currentQuestion === 9 ? 'FINISH CHALLENGE' : 'NEXT QUESTION';
+      document.getElementById('nextBtn').disabled = true;
+    }
+
+    function selectAnswer(selected, correct) {
+      const buttons = document.querySelectorAll('.answer-btn');
+      buttons.forEach((btn, i) => {
+        if (i === correct) btn.classList.add('correct');
+        else if (i === selected && i !== correct) btn.classList.add('wrong');
+        btn.disabled = true;
+      });
+      
+      if (selected === correct) score++;
+      document.getElementById('nextBtn').disabled = false;
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion < 10) {
+        showQuestion();
+      } else {
+        endQuiz();
+      }
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const timerEl = document.getElementById('timer');
+        timerEl.textContent = timeLeft;
+        
+        if (timeLeft > 30) timerEl.className = 'timer cream';
+        else if (timeLeft > 10) timerEl.className = 'timer bronze';
+        else timerEl.className = 'timer red';
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          showTimeout();
+        }
+      }, 1000);
+    }
+
+    function endQuiz() {
+      clearInterval(timerInterval);
+      const percentage = Math.round((score / 10) * 100);
+      
+      document.getElementById('finalScore').textContent = `${score}/10`;
+      
+      if (percentage >= 80) {
+        document.getElementById('resultTitle').textContent = 'ELITE VETERAN';
+        document.getElementById('resultMessage').textContent = '🏆 Top 5% Player!';
+      } else if (percentage >= 60) {
+        document.getElementById('resultTitle').textContent = 'SKILLED FIGHTER';
+        document.getElementById('resultMessage').textContent = '💪 Above Average!';
+      } else {
+        document.getElementById('resultTitle').textContent = 'ROOKIE SURVIVOR';
+        document.getElementById('resultMessage').textContent = '🔥 Keep Training!';
+      }
+      
+      document.getElementById('resultPopup').classList.add('show');
+    }
+
+    // EVENT LISTENERS
+    document.getElementById('nextBtn').onclick = nextQuestion;
+
+    function restartQuiz() {
+      currentQuestion = 0; score = 0; timeLeft = 60;
+      document.getElementById('resultPopup').classList.remove('show');
+      document.getElementById('timeoutPopup').classList.remove('show');
+      initQuiz();
+    }
+
+    function showTimeout() {
+      document.getElementById('timeoutPopup').classList.add('show');
+    }
+
+    function goBack() {
+      window.location.href = 'index.html'; // CHANGE TO YOUR PAGE 1 URL
+    }
+
+    // ANTI-CHEAT
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+          (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 'a')) e.preventDefault();
+    });
+  </script>
+</body>
+</html>
